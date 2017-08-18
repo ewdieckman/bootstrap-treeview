@@ -142,6 +142,7 @@
 
 			// Search methods
 			search: $.proxy(this.search, this),
+			search_attr: $.proxy(this.search_attr, this),
 			clearSearch: $.proxy(this.clearSearch, this)
 		};
 	};
@@ -1144,6 +1145,53 @@
 		return results;
 	};
 
+	/**
+		Searches the tree for nodes (by specified attribute) that match given criteria
+		@param {String} pattern - A given string to match against
+		@param {String} attr - An attribute to search against
+		@param {optional Object} options - Search criteria options
+		@return {Array} nodes - Matching nodes
+	*/	
+	Tree.prototype.search_attr = function (pattern, attr, options) {
+		options = $.extend({}, _default.searchOptions, options);
+
+		this.clearSearch({ render: false });
+
+		var results = [];
+		if (pattern && pattern.length > 0) {
+
+			if (options.exactMatch) {
+				pattern = '^' + pattern + '$';
+			}
+
+			var modifier = 'g';
+			if (options.ignoreCase) {
+				modifier += 'i';
+			}
+
+			results = this.findNodes(pattern, modifier, attr);
+
+			// Add searchResult property to all matching nodes
+			// This will be used to apply custom styles
+			// and when identifying result to be cleared
+			$.each(results, function (index, node) {
+				node.searchResult = true;
+			})
+		}
+
+		// If revealResults, then render is triggered from revealNode
+		// otherwise we just call render.
+		if (options.revealResults) {
+			this.revealNode(results);
+		}
+		else {
+			this.render();
+		}
+
+		this.$element.trigger('searchComplete', $.extend(true, {}, results));
+
+		return results;
+	};
 	/**
 		Clears previous search results
 	*/
